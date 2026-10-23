@@ -25,8 +25,9 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 
 /* верх */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-.brand{font-family:var(--head);font-weight:700;font-size:15px;letter-spacing:-.2px}
-.ghost{font-weight:800;font-size:14px;padding:8px 14px;border:2.5px solid var(--ink);border-radius:999px;background:var(--card)}
+.brand{font-family:var(--head);font-weight:700;font-size:15px;letter-spacing:-.2px;min-width:0;text-align:right}
+.top .brand:first-child{text-align:left}
+.ghost{flex:none;font-weight:800;font-size:14px;padding:8px 14px;border:2.5px solid var(--ink);border-radius:999px;background:var(--card)}
 .ghost:active{transform:translate(2px,2px)}
 
 /* стартовый экран */
@@ -36,7 +37,7 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
 .box{background:var(--card);border:3px solid var(--ink);border-radius:22px;box-shadow:6px 6px 0 var(--ink);padding:18px}
 .box h3{font-weight:900;font-size:15px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:flex;align-items:center;gap:6px;padding:8px 12px;border:2.5px solid var(--ink);border-radius:999px;font-weight:800;font-size:15px;background:var(--card);user-select:none}
+.chip{display:flex;align-items:center;gap:6px;padding:8px 12px;border:2.5px solid var(--ink);border-radius:999px;font-weight:800;font-size:15px;background:var(--card);user-select:none;text-align:left}
 .chip .n{font-weight:700;color:var(--muted);font-size:13px}
 .chip.sel{background:var(--ink);color:var(--sun)}
 .chip.sel .n{color:#C9C4A8}
@@ -47,6 +48,17 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
 .big:disabled{background:#C9C4A8;cursor:default}
 .note{margin-top:14px;font-size:14px;color:var(--muted);font-weight:600}
 .resume{margin-top:12px;width:100%;padding:14px;border:3px solid var(--ink);border-radius:18px;background:var(--card);font-weight:900;font-size:16px}
+
+/* переключатель классификаций (если в тренажёре их несколько) */
+.seg{display:flex;gap:4px;padding:5px;margin:0 0 18px;border:3px solid var(--ink);border-radius:18px;background:var(--card);box-shadow:5px 5px 0 var(--ink)}
+.seg[hidden]{display:none}
+.seg button{flex:1 1 auto;padding:9px 6px 8px;border-radius:12px;font-weight:900;font-size:14px;line-height:1.15;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:2px}
+.seg button small{font-weight:700;font-size:12px;color:var(--muted)}
+.seg button.on{background:var(--ink);color:var(--sun)}
+.seg button.on small{color:#C9C4A8}
+.seg button:active{transform:translate(1px,1px)}
+@media (max-width:380px){.seg{gap:2px;padding:4px}.seg button{font-size:13px;padding:8px 4px 7px;letter-spacing:-.2px}.seg button small{font-size:11px}}
+@media (max-width:340px){.seg button{font-size:12px;padding:8px 2px 7px}}
 
 /* прогресс */
 .prog{display:flex;align-items:center;gap:12px;margin-bottom:16px}
@@ -106,14 +118,19 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
 .hardlist span{color:var(--muted);font-weight:700;text-align:right}
 
 /* таблица */
+.tcap{font-family:var(--head);font-weight:700;font-size:18px;letter-spacing:-.3px;margin:4px 0 12px}
+.tbl + .tcap{margin-top:30px}
 .tbl{width:100%;border-collapse:separate;border-spacing:0;border:3px solid var(--ink);border-radius:18px;overflow:hidden;background:var(--card);box-shadow:6px 6px 0 var(--ink)}
 .tbl th{background:var(--ink);color:var(--sun);font-weight:900;text-align:left}
 .tbl th,.tbl td{padding:9px 12px;font-weight:700;font-size:15px;vertical-align:top}
 .tbl td{border-top:2px solid var(--line)}
 .tbl td:first-child{font-weight:900;white-space:nowrap;border-right:2px solid var(--line)}
+.tbl td.wr{white-space:normal;width:38%}
+.tbl td.sub{background:#FFF8D6;border-right:none}
+.tbl td.ind{padding-left:22px}
 .tbl th:first-child{border-right:2px solid #3A3A55}
 .tbl small{display:block;color:var(--muted);font-size:13px;margin-top:4px}
-@media (max-width:420px){.tbl th,.tbl td{padding:7px 8px;font-size:14px}.tbl small{font-size:12.5px}}
+@media (max-width:420px){.tbl th,.tbl td{padding:7px 8px;font-size:14px}.tbl td.ind{padding-left:16px}.tbl small{font-size:12.5px}}
 </style>
 </head>
 <body>
@@ -124,7 +141,8 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
     <div class="top"><span class="brand">Карточки</span><button class="ghost" data-go="table">Таблица</button></div>
     <p class="hello" id="hello" hidden></p>
     <h1>Разряды местоимений</h1>
-    <p class="lead">На карточке — местоимение. Вспомни разряд, переверни и проверь себя.</p>
+    <p class="lead" id="lead">На карточке — местоимение. Вспомни разряд, переверни и проверь себя.</p>
+    <div class="seg" id="seg" hidden></div>
     <div class="box">
       <h3>Какие разряды тренируем</h3>
       <div class="chips" id="chips"></div>
@@ -150,7 +168,7 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
         <div class="face back">
           <span class="tag" id="bword"></span>
           <div class="cat" id="cat"></div>
-          <div class="of">местоимение</div>
+          <div class="of" id="of"></div>
           <div class="list" id="list"></div>
         </div>
       </div>
@@ -180,30 +198,46 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
   <section class="screen" id="table">
     <div class="top"><button class="ghost" id="back">← Назад</button><span class="brand">Таблица</span></div>
     <h1 style="font-size:clamp(24px,7vw,32px)">Разряды местоимений</h1>
-    <table class="tbl" id="tbl"></table>
+    <div id="tables"></div>
   </section>
 
 </div>
 <script>
-const CATS = [{"name": "Личные", "sing": "Личное", "words": ["я", "мы", "ты", "вы", "он", "она", "оно", "они"], "rule": null}, {"name": "Притяжательные", "sing": "Притяжательное", "words": ["мой", "наш", "твой", "ваш", "свой", "его", "её", "их"], "rule": null}, {"name": "Возвратное", "sing": "Возвратное", "words": ["себя"], "rule": null}, {"name": "Вопросительные и относительные", "sing": "Вопросительное / относительное", "words": ["кто", "что", "какой", "чей", "сколько", "каков", "который"], "rule": "Вопросительное — в вопросе: _Кто пришёл?_\nОтносительное — связывает части сложного предложения (союзное слово): _Знаю, кто пришёл._"}, {"name": "Отрицательные", "sing": "Отрицательное", "words": ["никто", "ничто", "никакой", "ничей", "некого", "нечего"], "rule": null}, {"name": "Неопределённые", "sing": "Неопределённое", "words": ["некто", "нечто", "несколько", "некоторый", "кое-кто", "что-то", "какой-нибудь", "чей-либо"], "rule": "(и др. местоимения, образованные от вопросительно-относительных с помощью приставки кое- или суффиксов -то, -либо, -нибудь)"}, {"name": "Указательные", "sing": "Указательное", "words": ["этот", "тот", "такой", "таков", "сей", "столько"], "rule": null}, {"name": "Определительные", "sing": "Определительное", "words": ["весь", "всякий", "каждый", "сам", "самый", "любой", "иной", "другой"], "rule": null}];
-const TABLE = [{"name": "Личные", "words": ["я", "мы", "ты", "вы", "он", "она", "оно", "они"], "rule": null}, {"name": "Притяжательные", "words": ["мой", "наш", "твой", "ваш", "свой", "его", "её", "их"], "rule": null}, {"name": "Возвратное", "words": ["себя"], "rule": null}, {"name": "Вопросительные", "words": ["кто?", "что?", "какой?", "чей?", "сколько?", "каков?", "который?"], "rule": null}, {"name": "Относительные", "words": ["кто", "что", "какой", "чей", "сколько", "каков", "который"], "rule": null}, {"name": "Отрицательные", "words": ["никто", "ничто", "никакой", "ничей", "некого", "нечего"], "rule": null}, {"name": "Неопределённые", "words": ["некто", "нечто", "несколько", "некоторый", "кое-кто", "что-то", "какой-нибудь", "чей-либо"], "rule": "(и др. местоимения, образованные от вопросительно-относительных с помощью приставки кое- или суффиксов -то, -либо, -нибудь)"}, {"name": "Указательные", "words": ["этот", "тот", "такой", "таков", "сей", "столько"], "rule": null}, {"name": "Определительные", "words": ["весь", "всякий", "каждый", "сам", "самый", "любой", "иной", "другой"], "rule": null}];
+// Тренажёр собирается build.py: PAGE — заголовки и одна или несколько колод (классификаций).
+// Колода: {id, label, key, lead, tableTitle, cats:[{name, sing, of, words, rule}], cards:[{id, ci, w, pre?, post?, hl?, note?}], table:[...]}
+const PAGE = {"id": "pron", "title": "Разряды местоимений", "tag": "Местоимение", "lead": "На карточке — местоимение. Вспомни разряд, переверни и проверь себя.", "groups": [{"id": "pron", "label": "Местоимения", "key": "pron-cards-v3", "cats": [{"name": "Личные", "sing": "Личное", "words": ["я", "мы", "ты", "вы", "он", "она", "оно", "они"], "rule": null, "of": "местоимение"}, {"name": "Притяжательные", "sing": "Притяжательное", "words": ["мой", "наш", "твой", "ваш", "свой", "его", "её", "их"], "rule": null, "of": "местоимение"}, {"name": "Возвратное", "sing": "Возвратное", "words": ["себя"], "rule": null, "of": "местоимение"}, {"name": "Вопросительные и относительные", "sing": "Вопросительное / относительное", "words": ["кто", "что", "какой", "чей", "сколько", "каков", "который"], "rule": "Вопросительное — в вопросе: _Кто пришёл?_\nОтносительное — связывает части сложного предложения (союзное слово): _Знаю, кто пришёл._", "of": "местоимение"}, {"name": "Отрицательные", "sing": "Отрицательное", "words": ["никто", "ничто", "никакой", "ничей", "некого", "нечего"], "rule": null, "of": "местоимение"}, {"name": "Неопределённые", "sing": "Неопределённое", "words": ["некто", "нечто", "несколько", "некоторый", "кое-кто", "что-то", "какой-нибудь", "чей-либо"], "rule": "(и др. местоимения, образованные от вопросительно-относительных с помощью приставки кое- или суффиксов -то, -либо, -нибудь)", "of": "местоимение"}, {"name": "Указательные", "sing": "Указательное", "words": ["этот", "тот", "такой", "таков", "сей", "столько"], "rule": null, "of": "местоимение"}, {"name": "Определительные", "sing": "Определительное", "words": ["весь", "всякий", "каждый", "сам", "самый", "любой", "иной", "другой"], "rule": null, "of": "местоимение"}], "cards": [{"id": "0|я", "ci": 0, "w": "я"}, {"id": "0|мы", "ci": 0, "w": "мы"}, {"id": "0|ты", "ci": 0, "w": "ты"}, {"id": "0|вы", "ci": 0, "w": "вы"}, {"id": "0|он", "ci": 0, "w": "он"}, {"id": "0|она", "ci": 0, "w": "она"}, {"id": "0|оно", "ci": 0, "w": "оно"}, {"id": "0|они", "ci": 0, "w": "они"}, {"id": "1|мой", "ci": 1, "w": "мой"}, {"id": "1|наш", "ci": 1, "w": "наш"}, {"id": "1|твой", "ci": 1, "w": "твой"}, {"id": "1|ваш", "ci": 1, "w": "ваш"}, {"id": "1|свой", "ci": 1, "w": "свой"}, {"id": "2|себя", "ci": 2, "w": "себя"}, {"id": "3|кто", "ci": 3, "w": "кто"}, {"id": "3|что", "ci": 3, "w": "что"}, {"id": "3|какой", "ci": 3, "w": "какой"}, {"id": "3|чей", "ci": 3, "w": "чей"}, {"id": "3|сколько", "ci": 3, "w": "сколько"}, {"id": "3|каков", "ci": 3, "w": "каков"}, {"id": "3|который", "ci": 3, "w": "который"}, {"id": "4|никто", "ci": 4, "w": "никто"}, {"id": "4|ничто", "ci": 4, "w": "ничто"}, {"id": "4|никакой", "ci": 4, "w": "никакой"}, {"id": "4|ничей", "ci": 4, "w": "ничей"}, {"id": "4|некого", "ci": 4, "w": "некого"}, {"id": "4|нечего", "ci": 4, "w": "нечего"}, {"id": "5|некто", "ci": 5, "w": "некто"}, {"id": "5|нечто", "ci": 5, "w": "нечто"}, {"id": "5|несколько", "ci": 5, "w": "несколько"}, {"id": "5|некоторый", "ci": 5, "w": "некоторый"}, {"id": "5|кое-кто", "ci": 5, "w": "кое-кто"}, {"id": "5|что-то", "ci": 5, "w": "что-то"}, {"id": "5|какой-нибудь", "ci": 5, "w": "какой-нибудь"}, {"id": "5|чей-либо", "ci": 5, "w": "чей-либо"}, {"id": "6|этот", "ci": 6, "w": "этот"}, {"id": "6|тот", "ci": 6, "w": "тот"}, {"id": "6|такой", "ci": 6, "w": "такой"}, {"id": "6|таков", "ci": 6, "w": "таков"}, {"id": "6|сей", "ci": 6, "w": "сей"}, {"id": "6|столько", "ci": 6, "w": "столько"}, {"id": "7|весь", "ci": 7, "w": "весь"}, {"id": "7|всякий", "ci": 7, "w": "всякий"}, {"id": "7|каждый", "ci": 7, "w": "каждый"}, {"id": "7|сам", "ci": 7, "w": "сам"}, {"id": "7|самый", "ci": 7, "w": "самый"}, {"id": "7|любой", "ci": 7, "w": "любой"}, {"id": "7|иной", "ci": 7, "w": "иной"}, {"id": "7|другой", "ci": 7, "w": "другой"}, {"id": "0|вижу его", "ci": 0, "w": "его", "pre": "вижу ", "hl": "он", "note": "Здесь его — форма личного местоимения он (вижу кого? — его). Сравни: _его квартира_ — притяжательное (чья?)."}, {"id": "1|его квартира", "ci": 1, "w": "его", "post": " квартира", "note": "Здесь его — притяжательное (квартира чья? — его). Сравни: _вижу его_ — форма личного местоимения он (кого?)."}, {"id": "0|вижу её", "ci": 0, "w": "её", "pre": "вижу ", "hl": "она", "note": "Здесь её — форма личного местоимения она (вижу кого? — её). Сравни: _её квартира_ — притяжательное (чья?)."}, {"id": "1|её квартира", "ci": 1, "w": "её", "post": " квартира", "note": "Здесь её — притяжательное (квартира чья? — её). Сравни: _вижу её_ — форма личного местоимения она (кого?)."}, {"id": "0|вижу их", "ci": 0, "w": "их", "pre": "вижу ", "hl": "они", "note": "Здесь их — форма личного местоимения они (вижу кого? — их). Сравни: _их квартира_ — притяжательное (чья?)."}, {"id": "1|их квартира", "ci": 1, "w": "их", "post": " квартира", "note": "Здесь их — притяжательное (квартира чья? — их). Сравни: _вижу их_ — форма личного местоимения они (кого?)."}], "table": [{"name": "Личные", "words": ["я", "мы", "ты", "вы", "он", "она", "оно", "они"], "rule": null}, {"name": "Притяжательные", "words": ["мой", "наш", "твой", "ваш", "свой", "его", "её", "их"], "rule": null}, {"name": "Возвратное", "words": ["себя"], "rule": null}, {"name": "Вопросительные", "words": ["кто?", "что?", "какой?", "чей?", "сколько?", "каков?", "который?"], "rule": null}, {"name": "Относительные", "words": ["кто", "что", "какой", "чей", "сколько", "каков", "который"], "rule": null}, {"name": "Отрицательные", "words": ["никто", "ничто", "никакой", "ничей", "некого", "нечего"], "rule": null}, {"name": "Неопределённые", "words": ["некто", "нечто", "несколько", "некоторый", "кое-кто", "что-то", "какой-нибудь", "чей-либо"], "rule": "(и др. местоимения, образованные от вопросительно-относительных с помощью приставки кое- или суффиксов -то, -либо, -нибудь)"}, {"name": "Указательные", "words": ["этот", "тот", "такой", "таков", "сей", "столько"], "rule": null}, {"name": "Определительные", "words": ["весь", "всякий", "каждый", "сам", "самый", "любой", "иной", "другой"], "rule": null}]}]};
+const GROUPS = PAGE.groups;
+const MULTI = GROUPS.length > 1;
+const MODE_KEY = PAGE.id + '-mode';
 
-// ---------- данные ----------
-const CARDS = [{"id": "0|я", "ci": 0, "w": "я"}, {"id": "0|мы", "ci": 0, "w": "мы"}, {"id": "0|ты", "ci": 0, "w": "ты"}, {"id": "0|вы", "ci": 0, "w": "вы"}, {"id": "0|он", "ci": 0, "w": "он"}, {"id": "0|она", "ci": 0, "w": "она"}, {"id": "0|оно", "ci": 0, "w": "оно"}, {"id": "0|они", "ci": 0, "w": "они"}, {"id": "1|мой", "ci": 1, "w": "мой"}, {"id": "1|наш", "ci": 1, "w": "наш"}, {"id": "1|твой", "ci": 1, "w": "твой"}, {"id": "1|ваш", "ci": 1, "w": "ваш"}, {"id": "1|свой", "ci": 1, "w": "свой"}, {"id": "2|себя", "ci": 2, "w": "себя"}, {"id": "3|кто", "ci": 3, "w": "кто"}, {"id": "3|что", "ci": 3, "w": "что"}, {"id": "3|какой", "ci": 3, "w": "какой"}, {"id": "3|чей", "ci": 3, "w": "чей"}, {"id": "3|сколько", "ci": 3, "w": "сколько"}, {"id": "3|каков", "ci": 3, "w": "каков"}, {"id": "3|который", "ci": 3, "w": "который"}, {"id": "4|никто", "ci": 4, "w": "никто"}, {"id": "4|ничто", "ci": 4, "w": "ничто"}, {"id": "4|никакой", "ci": 4, "w": "никакой"}, {"id": "4|ничей", "ci": 4, "w": "ничей"}, {"id": "4|некого", "ci": 4, "w": "некого"}, {"id": "4|нечего", "ci": 4, "w": "нечего"}, {"id": "5|некто", "ci": 5, "w": "некто"}, {"id": "5|нечто", "ci": 5, "w": "нечто"}, {"id": "5|несколько", "ci": 5, "w": "несколько"}, {"id": "5|некоторый", "ci": 5, "w": "некоторый"}, {"id": "5|кое-кто", "ci": 5, "w": "кое-кто"}, {"id": "5|что-то", "ci": 5, "w": "что-то"}, {"id": "5|какой-нибудь", "ci": 5, "w": "какой-нибудь"}, {"id": "5|чей-либо", "ci": 5, "w": "чей-либо"}, {"id": "6|этот", "ci": 6, "w": "этот"}, {"id": "6|тот", "ci": 6, "w": "тот"}, {"id": "6|такой", "ci": 6, "w": "такой"}, {"id": "6|таков", "ci": 6, "w": "таков"}, {"id": "6|сей", "ci": 6, "w": "сей"}, {"id": "6|столько", "ci": 6, "w": "столько"}, {"id": "7|весь", "ci": 7, "w": "весь"}, {"id": "7|всякий", "ci": 7, "w": "всякий"}, {"id": "7|каждый", "ci": 7, "w": "каждый"}, {"id": "7|сам", "ci": 7, "w": "сам"}, {"id": "7|самый", "ci": 7, "w": "самый"}, {"id": "7|любой", "ci": 7, "w": "любой"}, {"id": "7|иной", "ci": 7, "w": "иной"}, {"id": "7|другой", "ci": 7, "w": "другой"}, {"id": "0|вижу его", "ci": 0, "w": "его", "pre": "вижу ", "hl": "он", "note": "Здесь его — форма личного местоимения он (вижу кого? — его). Сравни: _его квартира_ — притяжательное (чья?)."}, {"id": "1|его квартира", "ci": 1, "w": "его", "post": " квартира", "note": "Здесь его — притяжательное (квартира чья? — его). Сравни: _вижу его_ — форма личного местоимения он (кого?)."}, {"id": "0|вижу её", "ci": 0, "w": "её", "pre": "вижу ", "hl": "она", "note": "Здесь её — форма личного местоимения она (вижу кого? — её). Сравни: _её квартира_ — притяжательное (чья?)."}, {"id": "1|её квартира", "ci": 1, "w": "её", "post": " квартира", "note": "Здесь её — притяжательное (квартира чья? — её). Сравни: _вижу её_ — форма личного местоимения она (кого?)."}, {"id": "0|вижу их", "ci": 0, "w": "их", "pre": "вижу ", "hl": "они", "note": "Здесь их — форма личного местоимения они (вижу кого? — их). Сравни: _их квартира_ — притяжательное (чья?)."}, {"id": "1|их квартира", "ci": 1, "w": "их", "post": " квартира", "note": "Здесь их — притяжательное (квартира чья? — их). Сравни: _вижу их_ — форма личного местоимения они (кого?)."}];
 // подпись карточки: слово или словосочетание с контекстом
 const label = c => (c.pre || '') + c.w + (c.post || '');
 const nw = s => s.replace(/[А-Яа-яЁё]+(?:-[А-Яа-яЁё]+)+/g, m => '<span class="nw">' + m + '</span>');
 const esc = s => s.replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
 const rule = s => esc(s).replace(/\n/g, '<br>').replace(/_([^_]+)_/g, '<i>$1</i>');
-const joinW = ws => ws.map(w => nw(esc(w))).join(ws.every(w => w.endsWith('?')) ? ' ' : ', ');
+// пример целиком на одной строке, если он из нескольких слов (в соответствии с)
+const item = w => /\s/.test(w) ? '<span class="nw">' + esc(w) + '</span>' : nw(esc(w));
+const joinW = ws => ws.map(item).join(ws.every(w => w.endsWith('?')) ? ' ' : ', ');
+const $ = id => document.getElementById(id);
+
+GROUPS.forEach(g => {
+  g.byId = Object.fromEntries(g.cards.map(c => [c.id, c]));
+  g.IDX = Object.fromEntries(g.cards.map((c, i) => [c.id, i]));
+});
+
+// ---------- текущая колода ----------
+let G = null, CATS = [], CARDS = [], byId = {}, KEY = '';
+let store = {};
 
 // ---------- хранение (может быть недоступно) ----------
-const KEY = 'pron-cards-v3';
-function load(){ try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ return {}; } }
+function load(key, cats){
+  let st;
+  try { st = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){ st = {}; }
+  st.miss = st.miss || {};          // id -> сколько раз «повторить» за всё время
+  st.sel = Array.isArray(st.sel) ? st.sel : cats.map((_, i) => i);
+  return st;
+}
 function save(){ store.at = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e){} cloudSave(); }
-let store = load();
-store.miss = store.miss || {};          // id -> сколько раз «повторить» за всё время
-store.sel = Array.isArray(store.sel) ? store.sel : CATS.map((_, i) => i);
 
 // ---------- Telegram Mini App: вне Telegram этот блок ничего не делает ----------
 const TG = {on: false, wa: null, inited: false};
@@ -218,35 +252,49 @@ function haptic(kind){
   } catch(e){}
 }
 // облако Telegram хранит до 4096 символов на ключ — пишем компактно, номерами карточек
-const IDX = Object.fromEntries(CARDS.map((c, i) => [c.id, i]));
-const toIdx = ids => ids.filter(id => id in IDX).map(id => IDX[id]);
-const toIds = ns => ns.filter(n => CARDS[n]).map(n => CARDS[n].id);
+const toIdx = (g, ids) => ids.filter(id => id in g.IDX).map(id => g.IDX[id]);
+const toIds = (g, ns) => ns.filter(n => g.cards[n]).map(n => g.cards[n].id);
 const mapKeys = (o, f) => Object.fromEntries(Object.entries(o || {}).map(([k, v]) => [f(k), v]).filter(([k]) => k !== undefined && k !== null));
-function pack(){
-  const s = store.session;
-  return JSON.stringify({at: store.at || 0, sel: store.sel,
-    m: mapKeys(store.miss, id => IDX[id]),
-    s: s ? {q: toIdx(s.queue), d: toIdx(s.done), h: mapKeys(s.hard, id => IDX[id]), f: s.first, t: s.total, l: s.label} : null});
+function pack(st, g){
+  const s = st.session;
+  return JSON.stringify({at: st.at || 0, sel: st.sel,
+    m: mapKeys(st.miss, id => g.IDX[id]),
+    s: s ? {q: toIdx(g, s.queue), d: toIdx(g, s.done), h: mapKeys(s.hard, id => g.IDX[id]), f: s.first, t: s.total, l: s.label} : null});
 }
-function unpack(str){
+function unpack(str, g){
   const o = JSON.parse(str);
-  const st = {at: o.at || 0, sel: Array.isArray(o.sel) ? o.sel : CATS.map((_, i) => i),
-    miss: mapKeys(o.m, n => CARDS[n] && CARDS[n].id), session: null};
-  if (o.s) st.session = {queue: toIds(o.s.q || []), done: toIds(o.s.d || []), hard: mapKeys(o.s.h, n => CARDS[n] && CARDS[n].id),
+  const st = {at: o.at || 0, sel: Array.isArray(o.sel) ? o.sel : g.cats.map((_, i) => i),
+    miss: mapKeys(o.m, n => g.cards[n] && g.cards[n].id), session: null};
+  if (o.s) st.session = {queue: toIds(g, o.s.q || []), done: toIds(g, o.s.d || []), hard: mapKeys(o.s.h, n => g.cards[n] && g.cards[n].id),
     first: o.s.f || 0, total: o.s.t || 0, label: o.s.l || ''};
   return st;
 }
-let cloudT = null;
-function cloudSave(){
+const cloudT = {};
+function cloudSave(g = G, st = store){
   if (!tgVer('6.9')) return;
-  clearTimeout(cloudT);
-  cloudT = setTimeout(() => { try { TG.wa.CloudStorage.setItem(KEY, pack()); } catch(e){} }, 500);
+  clearTimeout(cloudT[g.key]);
+  cloudT[g.key] = setTimeout(() => { try { TG.wa.CloudStorage.setItem(g.key, pack(st, g)); } catch(e){} }, 500);
+}
+function cloudPull(g){
+  try {
+    TG.wa.CloudStorage.getItem(g.key, (err, val) => {
+      if (err) return;
+      const cur = g === G;
+      const local = cur ? store : load(g.key, g.cats);
+      if (!val){ if (cur || local.at) cloudSave(g, local); return; }
+      try {
+        const st = unpack(val, g);
+        if (st.at > (local.at || 0) && !(cur && S)){
+          try { localStorage.setItem(g.key, JSON.stringify(st)); } catch(e){}
+          if (cur){ store = st; renderChips(); }
+        } else if ((local.at || 0) > st.at) cloudSave(g, local);
+      } catch(e){}
+    });
+  } catch(e){}
 }
 
 // ---------- состояние ----------
 let S = null; // {queue:[id], total, done:[id], hard:{id:n}, first:n, label}
-const $ = id => document.getElementById(id);
-const byId = Object.fromEntries(CARDS.map(c => [c.id, c]));
 
 function show(name){
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === name));
@@ -267,8 +315,32 @@ function onTgBack(){
 let prevScreen = 'start';
 document.querySelectorAll('[data-go="table"]').forEach(b => b.onclick = () => {
   prevScreen = document.querySelector('.screen.on').id; show('table');
+  // в тренажёре с несколькими классификациями — сразу к таблице текущей
+  const t = $('t-' + G.id);
+  if (MULTI && G !== GROUPS[0] && t) window.scrollTo(0, t.getBoundingClientRect().top + window.scrollY - 12);
 });
 $('back').onclick = () => show(prevScreen);
+
+// ---------- выбор колоды ----------
+function useGroup(id){
+  G = GROUPS.find(g => g.id === id) || GROUPS[0];
+  CATS = G.cats; CARDS = G.cards; byId = G.byId; KEY = G.key;
+  store = load(KEY, CATS);
+  if (MULTI){ try { localStorage.setItem(MODE_KEY, G.id); } catch(e){} }
+  $('lead').textContent = G.lead || PAGE.lead;
+  renderSeg(); renderChips();
+}
+function renderSeg(){
+  const seg = $('seg');
+  seg.hidden = !MULTI;
+  if (!MULTI) return;
+  seg.innerHTML = GROUPS.map(g =>
+    `<button class="${g === G ? 'on' : ''}" data-g="${g.id}" aria-pressed="${g === G}">${esc(g.label)}<small>${g.cards.length} ${plural(g.cards.length, 'карточка', 'карточки', 'карточек')}</small></button>`).join('');
+  seg.querySelectorAll('button').forEach(b => b.onclick = () => {
+    if (b.dataset.g === G.id) return;
+    haptic('tap'); useGroup(b.dataset.g);
+  });
+}
 
 // ---------- старт ----------
 function renderChips(){
@@ -295,7 +367,7 @@ function startWith(ids, label){
   S = {queue: shuffle(ids.slice()), total: ids.length, done: [], hard: {}, first: 0, label};
   store.session = S; save(); play();
 }
-$('go').onclick = () => startWith(CARDS.filter(c => store.sel.includes(c.ci)).map(c => c.id), 'Все выбранные');
+$('go').onclick = () => startWith(CARDS.filter(c => store.sel.includes(c.ci)).map(c => c.id), MULTI ? G.label : 'Все выбранные');
 $('resume').onclick = () => { S = store.session; S.queue = S.queue.filter(id => byId[id]); play(); };
 
 // ---------- игра ----------
@@ -313,8 +385,9 @@ function next(first){
   $('word').classList.toggle('phrase', !!(c.pre || c.post));
   $('bword').innerHTML = nw(esc(label(c)));
   $('cat').textContent = cat.sing;
+  $('of').textContent = cat.of;
   const hl = c.hl || c.w;
-  $('list').innerHTML = cat.words.map(w => w === hl ? '<b>' + nw(esc(w)) + '</b>' : nw(esc(w))).join(', ')
+  $('list').innerHTML = cat.words.map(w => w === hl ? '<b class="nw">' + esc(w) + '</b>' : item(w)).join(', ')
     + (c.note ? '<span class="rule note">' + rule(c.note) + '</span>' : '')
     + (cat.rule ? '<span class="rule">' + rule(cat.rule) + '</span>' : '');
   $('no').disabled = $('yes').disabled = true;
@@ -385,13 +458,17 @@ function finish(){
     `<div>${nw(esc(label(byId[id])))}<span>${CATS[byId[id].ci].sing.toLowerCase()}</span></div>`).join('');
   const last = S;
   $('again').onclick = () => startWith(last.done.length ? Array.from(new Set([...last.done])) : [], last.label);
-  $('onlyHard').onclick = () => startWith(hardIds, 'Трудные');
+  $('onlyHard').onclick = () => startWith(hardIds, MULTI ? G.label + ' · трудные' : 'Трудные');
 }
 $('toStart').onclick = () => { renderChips(); show('start'); };
 
 // ---------- таблица ----------
-$('tbl').innerHTML = '<tr><th>Разряд</th><th>Примеры</th></tr>' + TABLE.map(c =>
-  `<tr><td>${c.name}</td><td>${joinW(c.words)}${c.rule ? '<small>' + rule(c.rule) + '</small>' : ''}</td></tr>`).join('');
+$('tables').innerHTML = GROUPS.map(g =>
+  (MULTI ? `<h2 class="tcap" id="t-${g.id}">${esc(g.tableTitle || g.label)}</h2>` : '')
+  + '<table class="tbl"><tr><th>Разряд</th><th>Примеры</th></tr>' + g.table.map(r => r.head
+      ? `<tr><td colspan="2" class="sub">${r.head}</td></tr>`
+      : `<tr><td class="${[/\s/.test(r.name) ? 'wr' : '', r.ind ? 'ind' : ''].join(' ').trim()}">${r.name}</td><td>${joinW(r.words)}${r.rule ? '<small>' + rule(r.rule) + '</small>' : ''}</td></tr>`).join('')
+  + '</table>').join('');
 
 function tgInit(){
   const wa = window.Telegram && window.Telegram.WebApp;
@@ -404,26 +481,13 @@ function tgInit(){
   const u = wa.initDataUnsafe && wa.initDataUnsafe.user;
   if (u && u.first_name){ $('hello').textContent = 'Привет, ' + u.first_name + '!'; $('hello').hidden = false; }
   tgBack();
-  if (tgVer('6.9')){
-    try {
-      wa.CloudStorage.getItem(KEY, (err, val) => {
-        if (err) return;
-        if (!val){ cloudSave(); return; }
-        try {
-          const st = unpack(val);
-          if (st.at > (store.at || 0) && !S){
-            store = st;
-            try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e){}
-            renderChips();
-          } else if ((store.at || 0) > st.at) cloudSave();
-        } catch(e){}
-      });
-    } catch(e){}
-  }
+  if (tgVer('6.9')) GROUPS.forEach(cloudPull);
 }
 window.__tgReady = tgInit;
 
-renderChips();
+let startId = GROUPS[0].id;
+if (MULTI){ try { startId = localStorage.getItem(MODE_KEY) || startId; } catch(e){} }
+useGroup(startId);
 tgInit();
 </script>
 </body>

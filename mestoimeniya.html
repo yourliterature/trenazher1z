@@ -82,7 +82,14 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
 .hint{position:absolute;bottom:18px;left:0;right:0;text-align:center;font-weight:700;font-size:14px;color:var(--muted)}
 .shapes{position:absolute;right:16px;top:14px;width:76px;height:46px}
 .back .tag{color:var(--ink);opacity:.7}
-.cat{font-family:var(--head);font-weight:700;font-size:clamp(20px,6.2vw,38px);letter-spacing:-.5px;line-height:1.1;margin:0 0 4px}
+.cat{max-width:100%;font-family:var(--head);font-weight:700;font-size:clamp(20px,6.2vw,38px);letter-spacing:-.5px;line-height:1.1;margin:0 0 4px}
+/* карточки-ударения */
+.word.stw{font-size:clamp(34px,11vw,60px);overflow-wrap:normal;letter-spacing:-1px}
+.qual{margin-top:12px;font-weight:800;font-size:17px;color:var(--muted)}
+.cat.stw{font-size:clamp(30px,9vw,50px);letter-spacing:-1px;margin-bottom:8px}
+.st{color:var(--pink)}
+.list .rule:first-child{margin-top:0}
+.tbl td.ln{white-space:normal;font-weight:700;border-right:none}
 .of{font-weight:800;color:var(--muted);margin-bottom:14px}
 .list{background:var(--card);border:2.5px solid var(--ink);border-radius:16px;padding:12px 14px;font-weight:700;font-size:16px;line-height:1.55;overflow:auto}
 .list b{background:var(--pink);color:#fff;border-radius:6px;padding:0 5px;font-weight:900}
@@ -163,6 +170,7 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
           <span class="tag">Местоимение</span>
           <svg class="shapes" viewBox="0 0 100 60" aria-hidden="true"><circle cx="22" cy="22" r="15" fill="#FFD23F" stroke="#1B1B2F" stroke-width="3"/><path d="M58 8 L80 44 L36 44 Z" fill="none" stroke="#1FBFA9" stroke-width="6" stroke-linejoin="round"/><g fill="#7B61FF"><circle cx="88" cy="10" r="3.2"/><circle cx="88" cy="22" r="3.2"/><circle cx="88" cy="34" r="3.2"/></g></svg>
           <div class="word" id="word"></div>
+          <div class="qual" id="qual" hidden></div>
           <div class="hint">Нажми, чтобы перевернуть</div>
         </div>
         <div class="face back">
@@ -218,6 +226,8 @@ const rule = s => esc(s).replace(/\n/g, '<br>').replace(/_([^_]+)_/g, '<i>$1</i>
 // пример целиком на одной строке, если он из нескольких слов (в соответствии с)
 const item = w => /\s/.test(w) ? '<span class="nw">' + esc(w) + '</span>' : nw(esc(w));
 const joinW = ws => ws.map(item).join(ws.every(w => w.endsWith('?')) ? ' ' : ', ');
+// ударная гласная в орфоэпическом списке — заглавная буква (аэропОрты); подсвечиваем её
+const stress = html => html.replace(/[АЕЁИОУЫЭЮЯ]/g, '<span class="st">$&</span>');
 const $ = id => document.getElementById(id);
 
 GROUPS.forEach(g => {
@@ -353,10 +363,11 @@ function renderChips(){
   });
   const n = CARDS.filter(c => store.sel.includes(c.ci)).length;
   $('go').disabled = !n;
-  $('go').textContent = n ? `Начать · ${n} ${plural(n, 'карточка', 'карточки', 'карточек')}` : 'Выбери хотя бы один разряд';
+  $('go').textContent = n ? `Начать · ${n} ${plural(n, 'карточка', 'карточки', 'карточек')}` : (PAGE.pickOne || 'Выбери хотя бы один разряд');
   $('resume').hidden = !(store.session && store.session.queue && store.session.queue.length);
   const worst = Object.entries(store.miss).filter(([id]) => byId[id]).sort((a, b) => b[1] - a[1]).slice(0, 4);
-  $('worst').innerHTML = worst.length ? 'Чаще всего путаешь: ' + worst.map(([id]) => '<b>' + nw(esc(label(byId[id]))) + '</b>').join(', ') : '';
+  $('worst').innerHTML = worst.length ? 'Чаще всего путаешь: ' + worst.map(([id]) => { const c = byId[id];
+    return '<b>' + (c.a ? stress(nw(esc(c.a))) : nw(esc(label(c)))) + '</b>'; }).join(', ') : '';
 }
 function plural(n, a, b, c){ const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20) ? b : c); }
 $('all').onclick = () => { store.sel = CATS.map((_, i) => i); save(); renderChips(); };
@@ -379,30 +390,44 @@ function next(first){
   const card = $('card');
   card.className = 'card'; flipped = false;
   void card.offsetWidth; card.classList.add('in');
-  $('word').innerHTML = (c.pre || c.post)
+  const st = !!c.a;   // карточка-ударение: на обороте не разряд, а само слово с ударением
+  $('word').innerHTML = (!st && (c.pre || c.post))
     ? `<span class="ctx">${esc(c.pre || '')}</span><span class="pr">${esc(c.w)}</span><span class="ctx">${esc(c.post || '')}</span>`
     : nw(esc(c.w));
-  $('word').classList.toggle('phrase', !!(c.pre || c.post));
-  fitWord();
-  $('bword').innerHTML = nw(esc(label(c)));
-  $('cat').textContent = cat.sing;
-  $('of').textContent = cat.of;
-  const hl = c.hl || c.w;
-  $('list').innerHTML = cat.words.map(w => w === hl ? '<b class="nw">' + esc(w) + '</b>' : item(w)).join(', ')
-    + (c.note ? '<span class="rule note">' + rule(c.note) + '</span>' : '')
-    + (cat.rule ? '<span class="rule">' + rule(cat.rule) + '</span>' : '');
+  $('word').classList.toggle('phrase', !st && !!(c.pre || c.post));
+  $('word').classList.toggle('stw', st);
+  $('qual').textContent = c.q || ''; $('qual').hidden = !c.q;
+  fit($('word'));
+  $('cat').classList.toggle('stw', st);
+  if (st){
+    $('bword').textContent = cat.sing;
+    $('cat').innerHTML = stress(nw(esc(c.a)));
+    $('of').innerHTML = stress(esc([c.q, c.gram].filter(Boolean).join(' · ')));
+    const extra = (c.entry ? '<span class="rule">Строка списка: ' + stress(esc(c.entry)) + '</span>' : '')
+      + (c.note ? '<span class="rule note">' + rule(c.note) + '</span>' : '');
+    $('list').innerHTML = extra; $('list').hidden = !extra;
+    fit($('cat'));
+  } else {
+    $('bword').innerHTML = nw(esc(label(c)));
+    $('cat').textContent = cat.sing; $('cat').style.fontSize = '';
+    $('of').textContent = cat.of;
+    const hl = c.hl || c.w;
+    $('list').hidden = false;
+    $('list').innerHTML = cat.words.map(w => w === hl ? '<b class="nw">' + esc(w) + '</b>' : item(w)).join(', ')
+      + (c.note ? '<span class="rule note">' + rule(c.note) + '</span>' : '')
+      + (cat.rule ? '<span class="rule">' + rule(cat.rule) + '</span>' : '');
+  }
   $('no').disabled = $('yes').disabled = true;
   $('cnt').textContent = `${S.done.length} / ${S.total}`;
   $('barI').style.width = (S.done.length / S.total * 100) + '%';
 }
-// длинное слово в словосочетании («соответствии») не переносим, а уменьшаем шрифт, пока не влезет в карточку
-function fitWord(){
-  const el = $('word');
+// длинное слово («соответствии», «сосредоточение») не переносим, а уменьшаем шрифт, пока не влезет в карточку
+function fit(el){
   el.style.fontSize = '';
   let size = parseFloat(getComputedStyle(el).fontSize);
   while (el.scrollWidth > el.clientWidth + 1 && size > 18){ size -= 2; el.style.fontSize = size + 'px'; }
 }
-addEventListener('resize', () => { if ($('play').classList.contains('on')) fitWord(); });
+addEventListener('resize', () => { if ($('play').classList.contains('on')){ fit($('word')); if ($('cat').classList.contains('stw')) fit($('cat')); } });
 function flip(){
   if (busy) return;
   flipped = !flipped;
@@ -463,8 +488,8 @@ function finish(){
   $('sHard').textContent = hardIds.length;
   $('hardBox').hidden = !hardIds.length;
   $('onlyHard').hidden = !hardIds.length;
-  $('hardList').innerHTML = hardIds.sort((a, b) => S.hard[b] - S.hard[a]).map(id =>
-    `<div>${nw(esc(label(byId[id])))}<span>${CATS[byId[id].ci].sing.toLowerCase()}</span></div>`).join('');
+  $('hardList').innerHTML = hardIds.sort((a, b) => S.hard[b] - S.hard[a]).map(id => { const c = byId[id];
+    return `<div>${nw(esc(label(c)))}<span>${c.a ? stress(nw(esc(c.a))) : CATS[c.ci].sing.toLowerCase()}</span></div>`; }).join('');
   const last = S;
   $('again').onclick = () => startWith(last.done.length ? Array.from(new Set([...last.done])) : [], last.label);
   $('onlyHard').onclick = () => startWith(hardIds, MULTI ? G.label + ' · трудные' : 'Трудные');
@@ -474,8 +499,11 @@ $('toStart').onclick = () => { renderChips(); show('start'); };
 // ---------- таблица ----------
 $('tables').innerHTML = GROUPS.map(g =>
   (MULTI ? `<h2 class="tcap" id="t-${g.id}">${esc(g.tableTitle || g.label)}</h2>` : '')
-  + '<table class="tbl"><tr><th>Разряд</th><th>Примеры</th></tr>' + g.table.map(r => r.head
+  + '<table class="tbl"><tr>' + ((th => th.length === 1 ? `<th colspan="2">${th[0]}</th>` : th.map(h => `<th>${h}</th>`).join(''))(g.thead || ['Разряд', 'Примеры'])) + '</tr>'
+  + g.table.map(r => r.head
       ? `<tr><td colspan="2" class="sub">${r.head}</td></tr>`
+      : r.line != null
+      ? `<tr><td colspan="2" class="ln">${stress(esc(r.line))}</td></tr>`
       : `<tr><td class="${[/\s/.test(r.name) ? 'wr' : '', r.ind ? 'ind' : ''].join(' ').trim()}">${r.name}</td><td>${joinW(r.words)}${r.rule ? '<small>' + rule(r.rule) + '</small>' : ''}</td></tr>`).join('')
   + '</table>').join('');
 

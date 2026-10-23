@@ -74,10 +74,10 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
 .front{background:var(--card);align-items:center;justify-content:center;text-align:center}
 .back{background:var(--sun);transform:rotateY(180deg);justify-content:center}
 .tag{position:absolute;top:18px;left:20px;font-weight:900;font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
-.word{font-family:var(--head);font-weight:700;font-size:clamp(40px,13vw,68px);letter-spacing:-1.5px;line-height:1.05;overflow-wrap:anywhere}
+.word{max-width:100%;font-family:var(--head);font-weight:700;font-size:clamp(40px,13vw,68px);letter-spacing:-1.5px;line-height:1.05;overflow-wrap:anywhere}
 .word.phrase{font-size:clamp(30px,9.5vw,54px);overflow-wrap:normal;letter-spacing:-1px}
 .word .ctx{color:#9A97A8}
-.word .pr{color:var(--ink);text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:.12em;text-underline-offset:.14em}
+.word .pr{white-space:nowrap;color:var(--ink);text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:.12em;text-underline-offset:.14em}
 .list .note{color:var(--ink)}
 .hint{position:absolute;bottom:18px;left:0;right:0;text-align:center;font-weight:700;font-size:14px;color:var(--muted)}
 .shapes{position:absolute;right:16px;top:14px;width:76px;height:46px}
@@ -383,6 +383,7 @@ function next(first){
     ? `<span class="ctx">${esc(c.pre || '')}</span><span class="pr">${esc(c.w)}</span><span class="ctx">${esc(c.post || '')}</span>`
     : nw(esc(c.w));
   $('word').classList.toggle('phrase', !!(c.pre || c.post));
+  fitWord();
   $('bword').innerHTML = nw(esc(label(c)));
   $('cat').textContent = cat.sing;
   $('of').textContent = cat.of;
@@ -394,6 +395,14 @@ function next(first){
   $('cnt').textContent = `${S.done.length} / ${S.total}`;
   $('barI').style.width = (S.done.length / S.total * 100) + '%';
 }
+// длинное слово в словосочетании («соответствии») не переносим, а уменьшаем шрифт, пока не влезет в карточку
+function fitWord(){
+  const el = $('word');
+  el.style.fontSize = '';
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > el.clientWidth + 1 && size > 18){ size -= 2; el.style.fontSize = size + 'px'; }
+}
+addEventListener('resize', () => { if ($('play').classList.contains('on')) fitWord(); });
 function flip(){
   if (busy) return;
   flipped = !flipped;

@@ -13,9 +13,14 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.4;-webkit-tap-highlight-color:transparent}
 .wrap{max-width:640px;margin:0 auto;padding:24px 16px calc(32px + env(safe-area-inset-bottom))}
+.top{display:flex;margin-bottom:18px}
+.ghost{font-weight:800;font-size:14px;padding:8px 14px;border:2.5px solid var(--ink);border-radius:999px;background:var(--card);color:var(--ink);text-decoration:none}
+.ghost:active{transform:translate(2px,2px)}
 .hello{font-weight:900;font-size:16px;color:var(--pink)}
 h1{font-family:var(--head);font-weight:700;font-size:clamp(30px,9vw,44px);line-height:1.05;letter-spacing:-1px;margin:6px 0 10px}
 .lead{color:var(--muted);font-weight:600;margin-bottom:24px}
+
+/* список тренажёров / тестов */
 .list{display:flex;flex-direction:column;gap:16px}
 a.item{display:flex;align-items:center;gap:16px;text-decoration:none;color:inherit;background:var(--card);border:3px solid var(--ink);border-radius:22px;box-shadow:6px 6px 0 var(--ink);padding:18px}
 a.item:active{transform:translate(3px,3px);box-shadow:3px 3px 0 var(--ink)}
@@ -24,39 +29,51 @@ a.item:active{transform:translate(3px,3px);box-shadow:3px 3px 0 var(--ink)}
 .txt b{display:block;font-family:var(--head);font-weight:700;font-size:18px;line-height:1.15;margin-bottom:4px}
 .txt span{font-weight:700;font-size:14px;color:var(--muted)}
 .arr{flex:none;font-family:var(--head);font-weight:700;font-size:22px}
+
+/* главный экран: две плашки */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+a.tile{min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:28px;min-height:200px;padding:18px 16px 16px;border:3px solid var(--ink);border-radius:24px;box-shadow:6px 6px 0 var(--ink);text-decoration:none;color:var(--ink)}
+a.tile:active{transform:translate(3px,3px);box-shadow:3px 3px 0 var(--ink)}
+a.tile.learn{background:var(--sun)}
+a.tile.solve{background:var(--teal)}
+.tico{width:52px;height:52px;border:3px solid var(--ink);border-radius:15px;background:var(--card);display:flex;align-items:center;justify-content:center}
+.ttxt b{display:block;font-family:var(--head);font-weight:700;font-size:clamp(24px,7.4vw,34px);letter-spacing:-1px;line-height:1;margin-bottom:8px}
+.ttxt span{display:block;font-weight:800;font-size:14px;line-height:1.3}
+@media (max-width:330px){.tiles{grid-template-columns:1fr}a.tile{min-height:0}}
 </style>
 </head>
 <body>
 <div class="wrap">
+  
   <p class="hello" id="hello" hidden></p>
   <h1>Тренажёры</h1>
-  <p class="lead">Карточки для повторения. Выбери, что учить. Прогресс сохраняется сам.</p>
-  <div class="list">
-    <a class="item" href="mestoimeniya.html">
-      <span class="ico"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="5" y="9" width="20" height="20" rx="4" fill="#fff" stroke="#1B1B2F" stroke-width="2.5"/><rect x="10" y="4" width="20" height="20" rx="4" fill="#E2336B" stroke="#1B1B2F" stroke-width="2.5"/></svg></span>
-      <span class="txt"><b>Разряды местоимений</b><span>55 карточек · пример → разряд</span></span>
-      <span class="arr">→</span>
+  <p class="lead">Учи по карточкам и проверяй себя в тестах. Прогресс сохраняется сам.</p>
+  <div class="tiles">
+    <a class="tile learn" href="uchit.html">
+      <span class="tico"><svg width="30" height="30" viewBox="0 0 34 34" aria-hidden="true"><rect x="5" y="9" width="20" height="20" rx="4" fill="#fff" stroke="#1B1B2F" stroke-width="2.5"/><rect x="10" y="4" width="20" height="20" rx="4" fill="#E2336B" stroke="#1B1B2F" stroke-width="2.5"/></svg></span>
+      <span class="ttxt"><b>Учить</b><span>Карточки: местоимения, предлоги, ударения</span></span>
     </a>
-    <a class="item" href="predlogi.html">
-      <span class="ico"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="5" y="9" width="20" height="20" rx="4" fill="#fff" stroke="#1B1B2F" stroke-width="2.5"/><rect x="10" y="4" width="20" height="20" rx="4" fill="#7B61FF" stroke="#1B1B2F" stroke-width="2.5"/></svg></span>
-      <span class="txt"><b>Разряды предлогов</b><span>97 карточек · структура, производность, значение</span></span>
-      <span class="arr">→</span>
-    </a>
-    <a class="item" href="udareniya.html">
-      <span class="ico"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="5" y="9" width="20" height="20" rx="4" fill="#fff" stroke="#1B1B2F" stroke-width="2.5"/><rect x="10" y="4" width="20" height="20" rx="4" fill="#1FBFA9" stroke="#1B1B2F" stroke-width="2.5"/></svg></span>
-      <span class="txt"><b>Ударения</b><span>212 карточек · слово → ударение, список ФИПИ</span></span>
-      <span class="arr">→</span>
+    <a class="tile solve" href="reshat.html">
+      <span class="tico"><svg width="30" height="30" viewBox="0 0 34 34" aria-hidden="true"><rect x="4" y="4" width="26" height="26" rx="6" fill="#fff" stroke="#1B1B2F" stroke-width="2.5"/><path d="M10 17.5 L15 22.5 L24.5 11.5" fill="none" stroke="#1FBFA9" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span class="ttxt"><b>Решать</b><span>Тесты: ударения</span></span>
     </a>
   </div>
 </div>
 <script>
+const BACK = false;   // на страницах «Учить» и «Решать» — кнопка «Назад» Telegram ведёт на главную
 let inited = false;
 function tgInit(){
   const wa = window.Telegram && window.Telegram.WebApp;
   if (inited || !wa || !wa.initData) return;
   inited = true;
   try { wa.ready(); wa.expand(); } catch(e){}
-  try { if (wa.isVersionAtLeast('6.1')){ wa.setHeaderColor('#FFF0B3'); wa.setBackgroundColor('#FFF0B3'); wa.BackButton.hide(); } } catch(e){}
+  try {
+    if (wa.isVersionAtLeast('6.1')){
+      wa.setHeaderColor('#FFF0B3'); wa.setBackgroundColor('#FFF0B3');
+      if (BACK){ wa.BackButton.onClick(() => { if (history.length > 1) history.back(); else location.href = 'index.html'; }); wa.BackButton.show(); }
+      else wa.BackButton.hide();
+    }
+  } catch(e){}
   const u = wa.initDataUnsafe && wa.initDataUnsafe.user;
   if (u && u.first_name){ const h = document.getElementById('hello'); h.textContent = 'Привет, ' + u.first_name + '!'; h.hidden = false; }
 }

@@ -78,26 +78,29 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
 .opt.dim{opacity:.45}
 .opts.stack{grid-template-columns:1fr}
 @media (max-width:360px){.opts{grid-template-columns:1fr}}
-.fb{min-height:96px}
-.fbin{border:3px solid var(--ink);border-radius:18px;padding:12px 14px;background:var(--card);font-weight:700;font-size:15px;line-height:1.45}
-.fbin.ok{border-color:var(--ok)}
-.fbin.bad{border-color:var(--bad)}
-.verdict{font-weight:900;font-size:16px;margin-bottom:2px}
-.fbin.ok .verdict{color:#0E8A78}
-.fbin.bad .verdict{color:var(--bad)}
-.fbin .ans{font-family:var(--head);font-weight:700;font-size:20px;letter-spacing:-.3px}
-.fbin .ans .st{color:var(--pink)}
-.fbin .gram{color:var(--muted)}
-.fbin .gram .st,.fbin .rule .st{color:var(--pink)}
-.fbin .rule{display:block;margin-top:6px;font-size:14px;color:var(--muted)}
-.next{margin-top:12px;width:100%;padding:15px;border:3px solid var(--ink);border-radius:18px;background:var(--ink);color:var(--sun);font-family:var(--head);font-weight:700;font-size:17px}
-.next:active{transform:translate(2px,2px)}
+/* плашка «Правильно / Неправильно» */
+.fb{min-height:62px}
+.fbin{position:relative;overflow:hidden;border:3px solid var(--ink);border-radius:18px;padding:14px 16px;font-family:var(--head);font-weight:700;font-size:19px;letter-spacing:-.3px;text-align:center;animation:pop .18s ease-out}
+.fbin.ok{background:var(--ok);color:var(--ink)}
+.fbin.bad{background:var(--bad);color:#fff}
+/* полоска внизу плашки тает, пока тест не перелистнёт на следующий вопрос */
+.fbin .timer{position:absolute;left:0;bottom:0;height:5px;width:100%;background:var(--ink);opacity:.35;transform-origin:left;animation:melt var(--wait) linear forwards}
+@keyframes melt{to{transform:scaleX(0)}}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}
+.nav{display:grid;grid-template-columns:auto 1fr;gap:10px}
+.nav button{white-space:nowrap;min-width:0}
+.prev{padding:15px 16px;border:3px solid var(--ink);border-radius:18px;background:var(--card);font-weight:900;font-size:15px}
+.next{padding:15px;border:3px solid var(--ink);border-radius:18px;background:var(--ink);color:var(--sun);font-family:var(--head);font-weight:700;font-size:17px}
+.prev:active:not(:disabled),.next:active:not(:disabled){transform:translate(2px,2px)}
+.prev:disabled,.next:disabled{opacity:.3;cursor:default}
+@media (max-width:340px){.prev{font-size:14px;padding:15px 10px}.next{font-size:15px}}
+@media (max-width:310px){.prev{font-size:13px;padding:15px 8px}.next{font-size:13px;padding:15px 6px}}
 .keys{margin-top:12px;text-align:center;font-size:13px;color:var(--muted);font-weight:700}
 @media (hover:none){.keys{display:none}}
 .fbin, .opts{animation:none}
 .qcard.in{animation:inA .22s ease-out}
 @keyframes inA{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
-@media (prefers-reduced-motion:reduce){.qcard.in{animation:none}.bar i{transition:none}}
+@media (prefers-reduced-motion:reduce){.qcard.in,.fbin{animation:none}.bar i{transition:none}.fbin .timer{display:none}}
 
 /* итог */
 .done h2{font-family:var(--head);font-weight:700;font-size:clamp(26px,7.5vw,36px);letter-spacing:-1px;line-height:1.1;margin:6px 0 16px}
@@ -146,9 +149,10 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
         <div class="qual" id="qual" hidden></div>
       </div>
       <div class="opts" id="opts"><button class="opt" id="o0"></button><button class="opt" id="o1"></button></div>
-      <div class="fb" id="fb"></div>
+      <div class="fb" id="fb" aria-live="polite"></div>
+      <div class="nav"><button class="prev" id="prev" disabled>← Предыдущий</button><button class="next" id="next" disabled>Дальше →</button></div>
     </div>
-    <p class="keys">← и → — выбрать вариант · Enter — дальше</p>
+    <p class="keys">1 и 2 — выбрать вариант · ← предыдущий · → или Enter — дальше</p>
   </section>
 
   <!-- итог -->
@@ -247,26 +251,42 @@ $('go').onclick = () => { const ids = shuffle(pool()); begin(store.len ? ids.sli
 $('fix').onclick = () => begin(shuffle(uniq(store.wrong)), 'Работа над ошибками');
 
 // ---------- тест ----------
-let T = null;   // {ids, pos, score, mistakes:[{id, pick}], label, answered, opts, timer}
+const WAIT = 2000;   // сколько горит плашка после верного ответа, прежде чем тест перелистнёт сам
+let T = null;   // {ids, pos, answers:[{opts:[2 варианта], pick: номер выбранного или null}], label, timer}
 function begin(ids, label){
   if (!ids.length) return;
-  T = {ids, pos: 0, score: 0, mistakes: [], label, answered: false, opts: [], timer: null};
+  T = {ids, pos: 0, answers: [], label, timer: null};
   $('mode').textContent = label;
-  show('play'); ask();
+  show('play'); render();
 }
-function ask(){
+const isOk = (i) => { const a = T.answers[i]; return a && a.pick !== null && a.opts[a.pick] === byId[T.ids[i]].a; };
+const answeredCount = () => T.answers.filter(a => a && a.pick !== null).length;
+// показать вопрос T.pos: новый — с пустыми вариантами, уже отвеченный — с ответом, менять его нельзя
+function render(){
+  clearTimeout(T.timer);
   const q = byId[T.ids[T.pos]];
-  T.answered = false; clearTimeout(T.timer);
-  T.opts = shuffle([q.a, q.d]);
+  if (!T.answers[T.pos]) T.answers[T.pos] = {opts: shuffle([q.a, q.d]), pick: null};
+  const a = T.answers[T.pos];
   const card = $('qcard'); card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
   $('word').textContent = q.w;
   $('qual').textContent = q.q || ''; $('qual').hidden = !q.q;
   fit($('word'));
-  T.opts.forEach((o, i) => { const b = $('o' + i); b.className = 'opt'; b.disabled = false; b.innerHTML = stress(esc(o)); b.setAttribute('aria-label', o); });
+  a.opts.forEach((o, i) => { const b = $('o' + i); b.className = 'opt'; b.disabled = false; b.innerHTML = stress(esc(o)); b.setAttribute('aria-label', o); });
   fitOpts();
   $('fb').innerHTML = '';
+  if (a.pick !== null) paint(false);
+  $('prev').disabled = T.pos === 0;
+  $('next').disabled = a.pick === null;
+  $('next').textContent = T.pos + 1 >= T.ids.length ? 'Результат →' : 'Дальше →';
   $('cnt').textContent = `${T.pos + 1} / ${T.ids.length}`;
-  $('barI').style.width = (T.pos / T.ids.length * 100) + '%';
+  $('barI').style.width = (answeredCount() / T.ids.length * 100) + '%';
+}
+// раскрасить варианты и зажечь плашку; timer — тающая полоска, если тест сейчас перелистнёт сам
+function paint(timer){
+  const q = byId[T.ids[T.pos]], a = T.answers[T.pos], right = a.opts.indexOf(q.a), ok = a.pick === right;
+  a.opts.forEach((_, k) => { const b = $('o' + k); b.disabled = true; b.classList.add(k === right ? 'ok' : (k === a.pick ? 'bad' : 'dim')); });
+  $('fb').innerHTML = `<div class="fbin ${ok ? 'ok' : 'bad'}">${ok ? 'Правильно!' : 'Неправильно'}`
+    + (timer ? `<span class="timer" style="--wait:${WAIT}ms"></span>` : '') + '</div>';
 }
 function fit(el){
   el.style.fontSize = '';
@@ -288,53 +308,56 @@ function fitOpts(){
 }
 addEventListener('resize', () => { if (cur() === 'play'){ fit($('word')); fitOpts(); } });
 function choose(i){
-  if (!T || T.answered) return;
-  T.answered = true;
-  const q = byId[T.ids[T.pos]], ok = T.opts[i] === q.a, right = T.opts.indexOf(q.a);
-  T.opts.forEach((_, k) => { const b = $('o' + k); b.disabled = true; b.classList.add(k === right ? 'ok' : (k === i ? 'bad' : 'dim')); });
-  if (ok){
-    T.score++;
-    store.wrong = store.wrong.filter(id => id !== q.id);
-  } else {
-    T.mistakes.push({id: q.id, pick: T.opts[i]});
-    if (!store.wrong.includes(q.id)) store.wrong.push(q.id);
-  }
+  if (!T || cur() !== 'play') return;
+  const a = T.answers[T.pos];
+  if (!a || a.pick !== null) return;
+  a.pick = i;
+  const q = byId[T.ids[T.pos]], ok = a.opts[i] === q.a;
+  if (ok) store.wrong = store.wrong.filter(id => id !== q.id);
+  else if (!store.wrong.includes(q.id)) store.wrong.push(q.id);
   save();
   haptic(ok ? 'ok' : 'bad');
-  const extra = [q.gram ? `<span class="gram">${stress(esc(q.gram))}</span>` : '',
-    q.entry ? `<span class="rule">Строка списка: ${stress(esc(q.entry))}</span>` : '',
-    q.note ? `<span class="rule">${rule(q.note)}</span>` : ''].filter(Boolean).join(' ');
-  const last = T.pos + 1 >= T.ids.length;
-  $('fb').innerHTML = `<div class="fbin ${ok ? 'ok' : 'bad'}"><div class="verdict">${ok ? 'Верно!' : 'Неверно. Правильно:'}</div>`
-    + (ok ? '' : `<div class="ans">${stress(nw(esc(q.a)))}</div>`) + extra + '</div>'
-    + `<button class="next" id="next">${last ? 'Результат →' : 'Дальше →'}</button>`;
-  $('next').onclick = nextQ;
-  if (ok) T.timer = setTimeout(nextQ, 900);   // верный ответ — сам листается дальше; неверный ждёт, чтобы успеть прочитать
+  paint(ok);
+  $('next').disabled = false;
+  $('barI').style.width = (answeredCount() / T.ids.length * 100) + '%';
+  if (ok) T.timer = setTimeout(nextQ, WAIT);   // верный ответ — сам листается дальше; неверный ждёт «Дальше»
   else $('next').focus({preventScroll: true});
 }
 function nextQ(){
-  if (!T || !T.answered) return;
+  if (!T) return;
+  const a = T.answers[T.pos];
+  if (!a || a.pick === null) return;
   clearTimeout(T.timer);
-  T.pos++;
-  if (T.pos >= T.ids.length) finish(); else ask();
+  if (T.pos + 1 >= T.ids.length){ if (answeredCount() === T.ids.length) finish(); return; }
+  T.pos++; render();
+}
+function prevQ(){
+  if (!T || T.pos === 0) return;
+  clearTimeout(T.timer);
+  T.pos--; render();
 }
 $('o0').onclick = () => choose(0);
 $('o1').onclick = () => choose(1);
+$('next').onclick = nextQ;
+$('prev').onclick = prevQ;
 $('quit').onclick = () => { if (T) clearTimeout(T.timer); renderStart(); show('start'); };
 document.addEventListener('keydown', e => {
-  if (cur() !== 'play') return;
-  if (e.key === 'ArrowLeft' || e.key === '1') choose(0);
-  else if (e.key === 'ArrowRight' || e.key === '2') choose(1);
-  else if ((e.key === 'Enter' || e.key === ' ') && T && T.answered){ e.preventDefault(); nextQ(); }
+  if (cur() !== 'play' || !T) return;
+  if (e.key === '1') choose(0);
+  else if (e.key === '2') choose(1);
+  else if (e.key === 'ArrowLeft') prevQ();
+  else if (e.key === 'ArrowRight' || e.key === 'Enter'){ e.preventDefault(); nextQ(); }
 });
 
 // ---------- итог ----------
 function finish(){
+  clearTimeout(T.timer);
   $('barI').style.width = '100%';
-  if (T.label === 'Тест'){ store.last = {s: T.score, t: T.ids.length}; save(); }
-  const n = T.ids.length, m = T.mistakes;
+  const n = T.ids.length, score = T.ids.filter((_, i) => isOk(i)).length;
+  const m = T.ids.map((id, i) => ({id, pick: T.answers[i].opts[T.answers[i].pick]})).filter((_, i) => !isOk(i));
+  if (T.label === 'Тест'){ store.last = {s: score, t: n}; save(); }
   $('dtitle').textContent = !m.length ? 'Без ошибок!' : (T.label === 'Тест' ? 'Тест пройден' : 'Работа над ошибками пройдена');
-  $('sv').innerHTML = `${T.score}<small> из ${n}</small>`;
+  $('sv').innerHTML = `${score}<small> из ${n}</small>`;
   $('mistBox').hidden = !m.length;
   $('mist').innerHTML = m.map(x => `<div><s>${stress(esc(x.pick))}</s><span>${stress(nw(esc(byId[x.id].a)))}</span></div>`).join('');
   const w = uniq(store.wrong).length;

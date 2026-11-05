@@ -78,7 +78,7 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
 .word.phrase{font-size:clamp(30px,9.5vw,54px);overflow-wrap:normal;letter-spacing:-1px}
 .word .ctx{color:#9A97A8}
 .word.sent{font-size:clamp(23px,7vw,36px);letter-spacing:-.5px;line-height:1.28;overflow-wrap:normal;color:var(--muted)}
-.word.sent .pr{text-decoration-thickness:.1em;text-underline-offset:.16em}
+.word.sent .pr{text-decoration-thickness:.1em;text-underline-offset:.16em;text-decoration-skip-ink:none}
 .word .pr{white-space:nowrap;color:var(--ink);text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:.12em;text-underline-offset:.14em}
 .list .note{color:var(--ink)}
 .hint{position:absolute;bottom:18px;left:0;right:0;text-align:center;font-weight:700;font-size:14px;color:var(--muted)}
@@ -169,7 +169,7 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
     <div class="stage">
       <div class="card" id="card" role="button" tabindex="0" aria-label="Перевернуть карточку">
         <div class="face front">
-          <span class="tag">Местоимение</span>
+          <span class="tag" id="ftag">Местоимение</span>
           <svg class="shapes" viewBox="0 0 100 60" aria-hidden="true"><circle cx="22" cy="22" r="15" fill="#FFD23F" stroke="#1B1B2F" stroke-width="3"/><path d="M58 8 L80 44 L36 44 Z" fill="none" stroke="#1FBFA9" stroke-width="6" stroke-linejoin="round"/><g fill="#7B61FF"><circle cx="88" cy="10" r="3.2"/><circle cx="88" cy="22" r="3.2"/><circle cx="88" cy="34" r="3.2"/></g></svg>
           <div class="word" id="word"></div>
           <div class="qual" id="qual" hidden></div>
@@ -341,6 +341,7 @@ function useGroup(id){
   store = load(KEY, CATS);
   if (MULTI){ try { localStorage.setItem(MODE_KEY, G.id); } catch(e){} }
   $('lead').textContent = G.lead || PAGE.lead;
+  $('ftag').textContent = G.tag || PAGE.tag;   // подпись на лицевой стороне может быть своей у колоды («Какая связь?»)
   renderSeg(); renderChips();
 }
 function renderSeg(){
@@ -417,12 +418,16 @@ function next(first){
   } else {
     $('bword').innerHTML = nw(esc(label(c)));
     $('cat').textContent = cat.sing; $('cat').style.fontSize = '';
-    $('of').textContent = cat.of;
-    const hl = c.hl || c.w;
-    $('list').hidden = false;
-    $('list').innerHTML = cat.words.map(w => w === hl ? '<b class="nw">' + esc(w) + '</b>' : item(w)).join(', ')
-      + (c.note ? '<span class="rule note">' + rule(c.note) + '</span>' : '')
+    $('of').textContent = c.of || cat.of;   // у карточки может быть своя строка под ответом («союз · причинный»)
+    const notes = (c.note ? '<span class="rule note">' + rule(c.note) + '</span>' : '')
       + (cat.rule ? '<span class="rule">' + rule(cat.rule) + '</span>' : '');
+    if (G.noList){   // колода без списка слов разряда на обороте (у «Связи» в разряде десятки слов)
+      $('list').innerHTML = notes; $('list').hidden = !notes;
+    } else {
+      const hl = c.hl || c.w;
+      $('list').hidden = false;
+      $('list').innerHTML = cat.words.map(w => w === hl ? '<b class="nw">' + esc(w) + '</b>' : item(w)).join(', ') + notes;
+    }
   }
   $('no').disabled = $('yes').disabled = true;
   $('cnt').textContent = `${S.done.length} / ${S.total}`;

@@ -57,6 +57,9 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
 .seg button.on{background:var(--ink);color:var(--sun)}
 .seg button.on small{color:#C9C4A8}
 .seg button:active{transform:translate(1px,1px)}
+.seg.stack{flex-direction:column;gap:4px}
+.seg.stack button{flex-direction:row;justify-content:space-between;align-items:baseline;gap:12px;padding:11px 14px;white-space:normal;text-align:left;font-size:15px}
+.seg.stack button small{flex:none;white-space:nowrap;font-size:13px}
 @media (max-width:380px){.seg{gap:2px;padding:4px}.seg button{font-size:13px;padding:8px 4px 7px;letter-spacing:-.2px}.seg button small{font-size:11px}}
 @media (max-width:340px){.seg button{font-size:12px;padding:8px 2px 7px}}
 
@@ -74,6 +77,8 @@ h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,8vw,40px);line-h
 .front{background:var(--card);align-items:center;justify-content:center;text-align:center}
 .back{background:var(--sun);transform:rotateY(180deg);justify-content:center}
 .tag{position:absolute;top:18px;left:20px;font-weight:900;font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.front .tag{right:96px;line-height:1.35;text-align:left}   /* длинная подпись переносится, не заходя под фигурки справа */
+@media (max-width:340px){.front .tag{font-size:11px;letter-spacing:.4px}}
 .word{max-width:100%;font-family:var(--head);font-weight:700;font-size:clamp(40px,13vw,68px);letter-spacing:-1.5px;line-height:1.05;overflow-wrap:anywhere}
 .word.phrase{font-size:clamp(30px,9.5vw,54px);overflow-wrap:normal;letter-spacing:-1px}
 .word .ctx{color:#9A97A8}
@@ -354,7 +359,16 @@ function renderSeg(){
     if (b.dataset.g === G.id) return;
     haptic('tap'); useGroup(b.dataset.g);
   });
+  stackSeg();
 }
+// длинные названия колод («Подчинительный или сочинительный») не влезают в одну строку — тогда колоды столбиком
+function stackSeg(){
+  const seg = $('seg');
+  if (seg.hidden) return;
+  seg.classList.remove('stack');
+  if (seg.scrollWidth > seg.clientWidth + 1 || [...seg.children].some(b => b.scrollWidth > b.clientWidth + 1)) seg.classList.add('stack');
+}
+addEventListener('resize', stackSeg);
 
 // ---------- старт ----------
 function renderChips(){
@@ -417,10 +431,12 @@ function next(first){
     fit($('cat'));
   } else {
     $('bword').innerHTML = nw(esc(label(c)));
-    $('cat').textContent = cat.sing; $('cat').style.fontSize = '';
-    $('of').textContent = c.of || cat.of;   // у карточки может быть своя строка под ответом («союз · причинный»)
+    // у карточки может быть свой ответ, строка под ним и правило («Подчинительное» / «союзное слово · местоимение»)
+    $('cat').textContent = c.sing || cat.sing; $('cat').style.fontSize = '';
+    $('of').textContent = c.of || cat.of;
+    const crule = c.rule || cat.rule;
     const notes = (c.note ? '<span class="rule note">' + rule(c.note) + '</span>' : '')
-      + (cat.rule ? '<span class="rule">' + rule(cat.rule) + '</span>' : '');
+      + (crule ? '<span class="rule">' + rule(crule) + '</span>' : '');
     if (G.noList){   // колода без списка слов разряда на обороте (у «Связи» в разряде десятки слов)
       $('list').innerHTML = notes; $('list').hidden = !notes;
     } else {
@@ -503,7 +519,7 @@ function finish(){
   $('hardBox').hidden = !hardIds.length;
   $('onlyHard').hidden = !hardIds.length;
   $('hardList').innerHTML = hardIds.sort((a, b) => S.hard[b] - S.hard[a]).map(id => { const c = byId[id];
-    return `<div>${nw(esc(label(c)))}<span>${c.a ? stress(nw(esc(c.a))) : CATS[c.ci].sing.toLowerCase()}</span></div>`; }).join('');
+    return `<div>${nw(esc(label(c)))}<span>${c.a ? stress(nw(esc(c.a))) : (c.sing || CATS[c.ci].sing).toLowerCase()}</span></div>`; }).join('');
   const last = S;
   $('again').onclick = () => startWith(last.done.length ? Array.from(new Set([...last.done])) : [], last.label);
   $('onlyHard').onclick = () => startWith(hardIds, MULTI ? G.label + ' · трудные' : 'Трудные');
